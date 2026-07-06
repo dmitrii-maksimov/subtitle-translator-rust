@@ -110,6 +110,21 @@ pub fn translate_and_remux(
     }
     let remux_src = mkv_path.ok_or("No MKV path provided for remux.")?;
 
+    // Warn on low disk space — remuxing writes a full copy of the video.
+    if let Ok(meta) = std::fs::metadata(remux_src) {
+        let needed = meta.len() + 100 * 1024 * 1024; // file size + 100 MB margin
+        let out_dir = Path::new(remux_src).parent().unwrap_or_else(|| Path::new("."));
+        if let Ok(free) = fs2::available_space(out_dir) {
+            if free < needed {
+                emit(Progress::Status(format!(
+                    "[Warning] Low disk space: {:.2} GB free, ~{:.2} GB needed. Remux may fail with 'No space left on device'.",
+                    free as f64 / 1e9,
+                    needed as f64 / 1e9
+                )));
+            }
+        }
+    }
+
     let overwrite = settings.overwrite_original;
     let out_mkv = if overwrite {
         emit(Progress::Status(

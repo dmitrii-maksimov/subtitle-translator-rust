@@ -24,6 +24,7 @@ export const api = {
   listModels: () => invoke<ModelInfo[]>("list_models"),
   modelsInfo: (ids: string[]) => invoke<ModelInfo[]>("models_info", { ids }),
   probeSubs: (path: string) => invoke<Stream[]>("probe_subs", { path }),
+  listMkvs: (dir: string) => invoke<string[]>("list_mkvs", { dir }),
   probeSubsPartial: (path: string) => invoke<Stream[]>("probe_subs_partial", { path }),
   startLive: (mkvPath: string, streamIndex: number) =>
     invoke<void>("start_live", { mkvPath, streamIndex }),

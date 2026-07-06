@@ -43,6 +43,7 @@ pub fn run() {
             commands::list_models,
             commands::models_info,
             commands::probe_subs,
+            commands::list_mkvs,
             commands::pick_source_stream,
             commands::cancel_job,
             commands::translate_srt_file,

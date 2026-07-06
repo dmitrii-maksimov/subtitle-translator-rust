@@ -225,6 +225,28 @@ pub fn probe_subs(path: String) -> Result<Vec<Stream>, String> {
     ffprobe_subs(&path)
 }
 
+/// Recursively list `.mkv` files under a folder (sorted), mirroring the Python
+/// os.walk in on_browse_folder.
+#[tauri::command]
+pub fn list_mkvs(dir: String) -> Vec<String> {
+    fn walk(dir: &std::path::Path, out: &mut Vec<String>) {
+        if let Ok(rd) = std::fs::read_dir(dir) {
+            for entry in rd.flatten() {
+                let p = entry.path();
+                if p.is_dir() {
+                    walk(&p, out);
+                } else if p.extension().map(|e| e.eq_ignore_ascii_case("mkv")).unwrap_or(false) {
+                    out.push(p.to_string_lossy().to_string());
+                }
+            }
+        }
+    }
+    let mut out = Vec::new();
+    walk(std::path::Path::new(&dir), &mut out);
+    out.sort();
+    out
+}
+
 #[tauri::command]
 pub fn pick_source_stream(streams: Vec<Stream>, target_lang: String) -> Option<i64> {
     crate::track_matcher::pick_source_subtitle_stream(&streams, &target_lang)

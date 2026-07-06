@@ -6,6 +6,34 @@ file by `scripts/extract_changelog.mjs`.
 
 Format: one `## <version>` header per release, newest first.
 
+## 2.1.0
+
+Feature parity with the 1.x app: Kodi integration and the live/follow modes
+are now ported.
+
+### Added
+- **Kodi integration**: a Kodi tab (behind the "Show Kodi integration" toggle)
+  with connection settings, "Test connection", network discovery (SSDP +
+  subnet scan), a Kodi folder browser, local↔Kodi path mapping with live
+  preview, and live-mode settings.
+- **Live-download mode**: translate subtitles from a still-downloading MKV —
+  new full windows are translated as they arrive and the tail is finished once
+  the file stops growing; resumable. Launched from "Live (downloading file)…".
+- **Kodi-follow mode**: watch the active Kodi player and keep the translated
+  subtitle track running ahead of playback (by the follow buffer), pushing it
+  to Kodi automatically; switches to an embedded target-language track if one
+  exists.
+- **Open folder** in the Main tab: recursively find and batch every `.mkv` in
+  a folder.
+- **Theme switcher** (System / Light / Dark) and prompt **reset-to-default**
+  buttons in Settings.
+- **Download ffmpeg** button (Windows) when ffmpeg isn't found.
+- Low-disk-space warning before remux.
+
+### Fixed
+- Model picker now persists the cached list and shows aligned prices.
+- Updater endpoint corrected; app title no longer duplicated.
+
 ## 2.0.2
 
 ### Fixed

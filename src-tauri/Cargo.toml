@@ -1,6 +1,6 @@
 [package]
 name = "subtitle-translator-rust"
-version = "2.0.2"
+version = "2.1.0"
 description = "Extract, translate and re-mux MKV subtitles via any OpenAI-compatible API"
 authors = ["Dmitrii Maksimov"]
 edition = "2021"
@@ -30,6 +30,7 @@ regex = "1"
 dirs = "5"
 zip = "2"
 base64 = "0.22"
+fs2 = "0.4"
 
 [target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
 tauri-plugin-updater = "2"
