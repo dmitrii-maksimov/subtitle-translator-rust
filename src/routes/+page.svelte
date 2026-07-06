@@ -109,7 +109,6 @@
 
 <div class="app">
   <header>
-    <h1>Subtitle Translator</h1>
     <nav>
       <button class:active={tab === "main"} onclick={() => (tab = "main")}>Main</button>
       <button class:active={tab === "settings"} onclick={() => (tab = "settings")}>
@@ -203,10 +202,6 @@
     align-items: baseline;
     justify-content: space-between;
     margin-bottom: 12px;
-  }
-  h1 {
-    font-size: 1.3em;
-    margin: 0;
   }
   nav {
     display: flex;

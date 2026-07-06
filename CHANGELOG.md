@@ -6,6 +6,16 @@ file by `scripts/extract_changelog.mjs`.
 
 Format: one `## <version>` header per release, newest first.
 
+## 2.0.2
+
+### Fixed
+- Update checks always failed ("Could not fetch a valid release JSON") — the
+  updater endpoint pointed at the wrong repository. It now points at
+  `subtitle-translator-rust` releases.
+- The app name was shown both in the OS title bar and again inside the window;
+  removed the in-window duplicate (the name stays in the title bar, the version
+  on the Settings tab).
+
 ## 2.0.1
 
 ### Added
