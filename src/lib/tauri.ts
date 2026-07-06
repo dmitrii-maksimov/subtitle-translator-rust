@@ -24,6 +24,9 @@ export const api = {
   listModels: () => invoke<ModelInfo[]>("list_models"),
   modelsInfo: (ids: string[]) => invoke<ModelInfo[]>("models_info", { ids }),
   probeSubs: (path: string) => invoke<Stream[]>("probe_subs", { path }),
+  probeSubsPartial: (path: string) => invoke<Stream[]>("probe_subs_partial", { path }),
+  startLive: (mkvPath: string, streamIndex: number) =>
+    invoke<void>("start_live", { mkvPath, streamIndex }),
   pickSourceStream: (streams: Stream[], targetLang: string) =>
     invoke<number | null>("pick_source_stream", { streams, targetLang }),
   cancelJob: () => invoke<void>("cancel_job"),

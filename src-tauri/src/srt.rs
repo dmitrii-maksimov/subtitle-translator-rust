@@ -173,6 +173,65 @@ pub fn write_srt_crlf(path: &Path, entries: &[Subtitle]) -> io::Result<()> {
     fs::write(path, text)
 }
 
+// ---- sentinel (core/srt_io.py) ----
+
+/// Placeholder cue appended after the last translated line while a file is still
+/// downloading, telling the viewer to pause.
+pub const SENTINEL_TEXT: &str =
+    "SUBTITLES NOT TRANSLATED YET — MOVIE STILL DOWNLOADING — PLEASE PAUSE";
+
+pub fn is_sentinel(sub: &Subtitle) -> bool {
+    sub.content.trim() == SENTINEL_TEXT
+}
+
+/// Drop a trailing sentinel cue if present.
+pub fn strip_sentinel(mut entries: Vec<Subtitle>) -> Vec<Subtitle> {
+    if entries.last().map(is_sentinel).unwrap_or(false) {
+        entries.pop();
+    }
+    entries
+}
+
+/// Format milliseconds as `HH:MM:SS`.
+pub fn ms_to_hms(ms: u64) -> String {
+    let s = ms / 1000;
+    format!("{:02}:{:02}:{:02}", s / 3600, (s / 60) % 60, s % 60)
+}
+
+fn make_sentinel(after_end_ms: u64) -> Subtitle {
+    Subtitle {
+        index: 0,
+        start_ms: after_end_ms + 1,
+        end_ms: after_end_ms + 4 * 3_600_000,
+        content: SENTINEL_TEXT.to_string(),
+    }
+}
+
+/// Read `out_srt`, strip any trailing sentinel, append `new_entries`, re-append a
+/// fresh sentinel, re-index, and write the whole file (CRLF). Ported from
+/// `write_translated_with_sentinel`.
+pub fn write_translated_with_sentinel(out_srt: &Path, new_entries: &[Subtitle]) -> io::Result<()> {
+    let mut existing = if out_srt.exists() {
+        match fs::read_to_string(out_srt) {
+            Ok(text) => parse(&text),
+            Err(_) => Vec::new(),
+        }
+    } else {
+        Vec::new()
+    };
+    existing = strip_sentinel(existing);
+    let mut all: Vec<Subtitle> = existing;
+    all.extend(new_entries.iter().cloned());
+    if let Some(last) = all.last() {
+        let last_end = last.end_ms;
+        all.push(make_sentinel(last_end));
+    }
+    for (i, e) in all.iter_mut().enumerate() {
+        e.index = (i + 1) as u32;
+    }
+    write_srt_crlf(out_srt, &all)
+}
+
 // ---- sanitize (core/sanitize.py) ----
 
 /// Drop pure index or timestamp lines the model may have leaked into a cue,

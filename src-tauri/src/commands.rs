@@ -230,6 +230,47 @@ pub fn pick_source_stream(streams: Vec<Stream>, target_lang: String) -> Option<i
     crate::track_matcher::pick_source_subtitle_stream(&streams, &target_lang)
 }
 
+/// Lenient probe for a still-downloading MKV (used by live mode).
+#[tauri::command]
+pub fn probe_subs_partial(path: String) -> Result<Vec<Stream>, String> {
+    crate::ffmpeg::probe::ffprobe_subs_partial(&path)
+}
+
+/// Start the live-download translation loop. Streams progress events and runs
+/// until the file finishes and the tail is translated, or until cancelled.
+#[tauri::command]
+pub async fn start_live(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    mkv_path: String,
+    stream_index: i64,
+) -> Result<(), String> {
+    let settings = state.settings.lock().unwrap().clone();
+    let cancel = state.cancel.clone();
+    cancel.store(false, Ordering::SeqCst);
+    let target_lang = if settings.target_language.is_empty() {
+        "ru".to_string()
+    } else {
+        settings.target_language.clone()
+    };
+
+    tauri::async_runtime::spawn_blocking(move || {
+        let emit = make_emitter(app);
+        let translator = TranslationService::new(settings.clone());
+        crate::live::live_translate_mkv(
+            &mkv_path,
+            stream_index,
+            &target_lang,
+            &settings,
+            &translator,
+            &cancel,
+            &emit,
+        )
+    })
+    .await
+    .map_err(|e| format!("task join error: {e}"))?
+}
+
 // ---- cancellation ----
 
 #[tauri::command]

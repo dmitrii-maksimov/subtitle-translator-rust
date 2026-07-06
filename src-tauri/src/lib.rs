@@ -3,9 +3,10 @@
 mod commands;
 mod engine;
 pub mod ffmpeg;
-// Ported Kodi client; command/UI wiring lands in the next pass.
+// Ported Kodi client; follow-mode methods wire in a later pass.
 #[allow(dead_code)]
 mod kodi_client;
+mod live;
 mod orchestrate;
 mod pricing;
 mod services;
@@ -49,6 +50,8 @@ pub fn run() {
             commands::kodi_discover,
             commands::kodi_browse,
             commands::kodi_map_preview,
+            commands::probe_subs_partial,
+            commands::start_live,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
