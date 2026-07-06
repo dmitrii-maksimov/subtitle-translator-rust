@@ -6,6 +6,21 @@ file by `scripts/extract_changelog.mjs`.
 
 Format: one `## <version>` header per release, newest first.
 
+## 2.1.1
+
+### Fixed
+- All settings now auto-save on change — theme, "Show Kodi integration" and
+  every other option persist reliably (previously some could be lost without a
+  manual Save). The explicit Save buttons are no longer needed.
+- The "Update available" banner now renders the release notes as formatted text
+  instead of raw markdown.
+
+### Changed
+- Reworked the Settings and Kodi tabs into a compact, consistent layout:
+  sectioned panels with a floating title, right-aligned labels, custom number
+  steppers (▲/▼), thinner controls, tidy custom scrollbars, and a resizable
+  prompt box without the stray corner artifact.
+
 ## 2.1.0
 
 Feature parity with the 1.x app: Kodi integration and the live/follow modes

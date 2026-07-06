@@ -2,6 +2,7 @@
   import { open } from "@tauri-apps/plugin-dialog";
   import { api } from "./tauri";
   import KodiFollow from "./KodiFollow.svelte";
+  import NumberField from "./NumberField.svelte";
   import type { AppSettings, KodiEntry, KodiInstance } from "./types";
 
   let { settings = $bindable() }: { settings: AppSettings } = $props();
@@ -14,7 +15,6 @@
   let found = $state<KodiInstance[]>([]);
 
   let preview = $state("");
-  let savedFlash = $state(false);
   let showFollow = $state(false);
 
   // Browse modal state.
@@ -24,12 +24,6 @@
   let browseEntries = $state<KodiEntry[]>([]);
   let browseError = $state("");
   let browseLoading = $state(false);
-
-  async function save() {
-    await api.saveSettings($state.snapshot(settings));
-    savedFlash = true;
-    setTimeout(() => (savedFlash = false), 1200);
-  }
 
   async function test() {
     testing = true;
@@ -137,59 +131,67 @@
 </script>
 
 <div class="kodi">
-  <fieldset>
-    <legend>Kodi connection</legend>
-    <label class="row"><span class="lbl">Host</span>
+  <div class="section">
+    <div class="section-title">Kodi connection</div>
+    <label class="field-row"><span class="field-label colon">Host</span>
       <input type="text" bind:value={settings.kodi_host} placeholder="192.168.1.50" /></label>
-    <label class="row"><span class="lbl">Port</span>
-      <input type="number" bind:value={settings.kodi_port} /></label>
-    <label class="row"><span class="lbl">User</span>
+    <label class="field-row"><span class="field-label colon">Port</span>
+      <NumberField bind:value={settings.kodi_port} min={1} /></label>
+    <label class="field-row"><span class="field-label colon">User</span>
       <input type="text" bind:value={settings.kodi_user} /></label>
-    <label class="row"><span class="lbl">Password</span>
+    <label class="field-row"><span class="field-label colon">Password</span>
       <input type="password" bind:value={settings.kodi_password} /></label>
-    <div class="btns">
+    <div class="field-row">
+      <span class="field-label"></span>
       <button onclick={discover} disabled={discovering}>
         {discovering ? "Searching…" : "Find Kodi on network"}
       </button>
       <button onclick={test} disabled={testing}>Test connection</button>
     </div>
-    <p class="status" class:ok={statusOk}>{status}</p>
+    <div class="field-row">
+      <span class="field-label colon">Status</span>
+      <span class="status" class:ok={statusOk}>{status}</span>
+    </div>
     {#if found.length}
-      <div class="found">
-        {#each found as inst (inst.ip + inst.port)}
-          <button class="found-item" onclick={() => pickInstance(inst)}>
-            {inst.name} <span class="muted">({inst.ip}:{inst.port} · {inst.source})</span>
-          </button>
-        {/each}
+      <div class="field-row">
+        <span class="field-label"></span>
+        <div class="found">
+          {#each found as inst (inst.ip + inst.port)}
+            <button class="found-item" onclick={() => pickInstance(inst)}>
+              {inst.name} <span class="muted">({inst.ip}:{inst.port} · {inst.source})</span>
+            </button>
+          {/each}
+        </div>
       </div>
     {/if}
-  </fieldset>
+  </div>
 
-  <fieldset>
-    <legend>Path mapping</legend>
-    <label class="row"><span class="lbl">Kodi source</span>
+  <div class="section">
+    <div class="section-title">Path mapping</div>
+    <label class="field-row"><span class="field-label colon">Kodi source</span>
       <input type="text" bind:value={settings.kodi_source_path} placeholder="smb://nas/movies" />
       <button onclick={openBrowse}>Pick Kodi folder</button></label>
-    <label class="row"><span class="lbl">Local parent</span>
+    <label class="field-row"><span class="field-label colon">Local parent</span>
       <input type="text" bind:value={settings.local_parent_path} placeholder="/Volumes/movies" />
       <button onclick={pickLocalParent}>Pick local folder</button></label>
-    <pre class="preview">{preview}</pre>
-  </fieldset>
+    <div class="field-row preview-row">
+      <span class="field-label colon">Mapping preview</span>
+      <pre class="preview">{preview}</pre>
+    </div>
+  </div>
 
-  <fieldset>
-    <legend>Live mode</legend>
-    <label class="row"><span class="lbl">Poll interval (s)</span>
-      <input type="number" min="1" bind:value={settings.live_poll_interval} /></label>
-    <label class="row"><span class="lbl">Stable finish (s)</span>
-      <input type="number" min="1" bind:value={settings.live_stable_threshold} /></label>
-    <label class="row"><span class="lbl">Follow buffer (min)</span>
-      <input type="number" min="1" bind:value={settings.kodi_follow_buffer_min} /></label>
-  </fieldset>
+  <div class="section">
+    <div class="section-title">Live mode</div>
+    <label class="field-row"><span class="field-label colon">Poll interval (s)</span>
+      <NumberField bind:value={settings.live_poll_interval} min={1} /></label>
+    <label class="field-row"><span class="field-label colon">Stable finish (s)</span>
+      <NumberField bind:value={settings.live_stable_threshold} min={1} /></label>
+    <label class="field-row"><span class="field-label colon">Follow buffer (min)</span>
+      <NumberField bind:value={settings.kodi_follow_buffer_min} min={1} /></label>
+  </div>
 
   <div class="actions">
-    <button class="primary" onclick={save}>Save Kodi settings</button>
     <button onclick={() => (showFollow = true)}>Follow Kodi playback…</button>
-    {#if savedFlash}<span class="flash">Saved ✓</span>{/if}
   </div>
 </div>
 
@@ -235,40 +237,10 @@
   .kodi {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    max-width: 720px;
-  }
-  fieldset {
-    border: 1px solid rgba(128, 128, 128, 0.3);
-    border-radius: 8px;
-    padding: 12px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  legend {
-    font-weight: 600;
-    padding: 0 6px;
-  }
-  .row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .lbl {
-    width: 130px;
-    flex: 0 0 auto;
-  }
-  .row input {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-  .btns {
-    display: flex;
-    gap: 10px;
+    gap: 15px;
+    width: 100%;
   }
   .status {
-    margin: 2px 0 0;
     color: #c0392b;
   }
   .status.ok {
@@ -278,6 +250,7 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
+    flex: 1 1 auto;
   }
   .found-item {
     text-align: left;
@@ -285,12 +258,16 @@
   .muted {
     color: var(--muted, #888);
   }
+  .preview-row {
+    align-items: flex-start;
+  }
   .preview {
+    flex: 1 1 auto;
+    min-width: 0;
     margin: 0;
-    padding: 8px 10px;
+    padding: 3px 8px;
     background: rgba(128, 128, 128, 0.1);
-    border-radius: 6px;
-    font-size: 0.85em;
+    border-radius: 5px;
     white-space: pre-wrap;
     word-break: break-all;
   }
@@ -298,9 +275,6 @@
     display: flex;
     align-items: center;
     gap: 12px;
-  }
-  .flash {
-    color: #27ae60;
   }
   .backdrop {
     position: fixed;

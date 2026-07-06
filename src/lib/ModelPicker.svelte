@@ -51,13 +51,15 @@
 </script>
 
 <div class="model-picker">
-  <label class="row">
-    <span class="lbl">Model</span>
+  <div class="field-row">
+    <span class="field-label colon">Model</span>
+
     {#if settings.use_custom_model}
       <input
+        class="grow"
         type="text"
         bind:value={settings.model}
-        placeholder="custom model id (for local proxies / unlisted models)"
+        placeholder="custom model id, e.g. gpt-4o-mini"
       />
     {:else}
       <div class="combo-wrap">
@@ -90,17 +92,16 @@
           </div>
         {/if}
       </div>
-    {/if}
-  </label>
 
-  <div class="controls">
+      <button class="refresh" onclick={refresh} disabled={loading}>
+        {loading ? "Refreshing…" : "Refresh"}
+      </button>
+    {/if}
+
     <label class="custom">
       <input type="checkbox" bind:checked={settings.use_custom_model} />
       Custom
     </label>
-    <button onclick={refresh} disabled={loading}>
-      {loading ? "Refreshing…" : "Refresh"}
-    </button>
   </div>
 
   {#if error}
@@ -114,14 +115,18 @@
     flex-direction: column;
     gap: 6px;
   }
-  .row {
+  .grow {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .refresh {
+    flex: 0 0 auto;
+  }
+  .custom {
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
-    gap: 10px;
-  }
-  .lbl {
-    width: 120px;
-    flex: 0 0 auto;
+    gap: 6px;
   }
   .combo-wrap {
     position: relative;
@@ -133,7 +138,8 @@
     align-items: center;
     gap: 10px;
     width: 100%;
-    height: 34px;
+    height: 22px;
+    padding: 0 10px;
     text-align: left;
     cursor: pointer;
   }
@@ -210,20 +216,9 @@
     padding: 10px;
     opacity: 0.6;
   }
-  .controls {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-left: 130px;
-  }
-  .custom {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
   .err {
     color: #c0392b;
-    margin: 4px 0 0 130px;
+    margin: 4px 0 0 148px;
     font-size: 0.9em;
   }
 </style>

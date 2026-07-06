@@ -1,5 +1,6 @@
 <script lang="ts">
   import ModelPicker from "./ModelPicker.svelte";
+  import NumberField from "./NumberField.svelte";
   import type { AppSettings } from "./types";
   import { api } from "./tauri";
 
@@ -15,14 +16,6 @@
     onCheckUpdates?: () => void;
   } = $props();
 
-  let savedFlash = $state(false);
-
-  async function save() {
-    await api.saveSettings($state.snapshot(settings));
-    savedFlash = true;
-    setTimeout(() => (savedFlash = false), 1200);
-  }
-
   async function resetMainPrompt() {
     settings.main_prompt_template = (await api.defaultPrompts()).main_prompt_template;
   }
@@ -32,166 +25,133 @@
 </script>
 
 <div class="settings">
-  <label class="row">
-    <span class="lbl">Theme</span>
-    <select bind:value={settings.theme}>
-      <option value="system">System (default)</option>
-      <option value="light">Light</option>
-      <option value="dark">Dark</option>
-    </select>
-  </label>
+  <div class="section">
+    <div class="section-title">General</div>
+    <label class="field-row">
+      <span class="field-label colon">Theme</span>
+      <select bind:value={settings.theme}>
+        <option value="system">System (default)</option>
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </label>
+    <label class="field-row">
+      <span class="field-label colon">Target Language</span>
+      <input type="text" bind:value={settings.target_language} placeholder="ru" />
+    </label>
+  </div>
 
-  <label class="row">
-    <span class="lbl">API Key</span>
-    <input type="password" bind:value={settings.api_key} placeholder="sk-…" />
-  </label>
+  <div class="section">
+    <div class="section-title">API</div>
+    <label class="field-row">
+      <span class="field-label colon">API Key</span>
+      <input type="password" bind:value={settings.api_key} placeholder="sk-…" />
+    </label>
+    <label class="field-row">
+      <span class="field-label colon">API Base URL</span>
+      <input type="text" bind:value={settings.api_base} />
+    </label>
+    <ModelPicker bind:settings />
+  </div>
 
-  <label class="row">
-    <span class="lbl">API Base URL</span>
-    <input type="text" bind:value={settings.api_base} />
-  </label>
+  <div class="section">
+    <div class="section-title">Translation</div>
+    <label class="field-row">
+      <span class="field-label colon">Workers</span>
+      <NumberField bind:value={settings.workers} min={1} max={10} />
+    </label>
+    <label class="field-row">
+      <span class="field-label colon">Window</span>
+      <NumberField bind:value={settings.window} min={1} />
+    </label>
+    <label class="field-row">
+      <span class="field-label colon">Overlap</span>
+      <NumberField bind:value={settings.overlap} min={0} />
+    </label>
+    <label class="field-row">
+      <span class="field-label colon">Extra instruction</span>
+      <input type="text" bind:value={settings.extra_prompt} placeholder="e.g. keep it formal" />
+    </label>
+  </div>
 
-  <ModelPicker bind:settings />
-
-  <label class="row">
-    <span class="lbl">Target Language</span>
-    <input type="text" bind:value={settings.target_language} placeholder="ru" />
-  </label>
-
-  <label class="row">
-    <span class="lbl">Workers</span>
-    <input type="number" min="1" max="10" bind:value={settings.workers} />
-  </label>
-  <label class="row">
-    <span class="lbl">Window</span>
-    <input type="number" min="1" bind:value={settings.window} />
-  </label>
-  <label class="row">
-    <span class="lbl">Overlap</span>
-    <input type="number" min="0" bind:value={settings.overlap} />
-  </label>
-
-  <label class="check">
-    <input type="checkbox" bind:checked={settings.overwrite_original} />
-    Overwrite the original file
-  </label>
-  <label class="check">
-    <input type="checkbox" bind:checked={settings.fulllog} />
-    Full request/response log (debug)
-  </label>
-
-  <label class="row">
-    <span class="lbl">Extra instruction</span>
-    <input
-      type="text"
-      bind:value={settings.extra_prompt}
-      placeholder="e.g. keep it formal"
-    />
-  </label>
-
-  <details>
-    <summary>Advanced prompt overrides</summary>
+  <div class="section">
+    <div class="section-title">Prompt overrides</div>
     <label class="col">
       <span>Main prompt template (use {"{header}"}, {"{extra}"}, {"{src_block}"})</span>
       <textarea rows="6" bind:value={settings.main_prompt_template}></textarea>
     </label>
     <button class="reset" onclick={resetMainPrompt}>Reset main prompt to default</button>
-
     <label class="col">
       <span>System role (chat system message)</span>
       <textarea rows="2" bind:value={settings.system_role}></textarea>
     </label>
     <button class="reset" onclick={resetSystemRole}>Reset system role to default</button>
-  </details>
-
-  <div class="actions">
-    <button class="primary" onclick={save}>Save settings</button>
-    {#if savedFlash}<span class="flash">Saved ✓</span>{/if}
   </div>
 
-  <hr />
-
-  <label class="check">
-    <input type="checkbox" bind:checked={settings.show_kodi} />
-    Show Kodi integration
-  </label>
-  <label class="check">
-    <input type="checkbox" bind:checked={settings.auto_check_updates} />
-    Automatically check for updates on startup
-  </label>
-  <div class="actions">
-    <button onclick={() => onCheckUpdates?.()}>Check for updates now</button>
-    {#if updateStatus}<span class="update-status">{updateStatus}</span>{/if}
+  <div class="section">
+    <div class="section-title">Options</div>
+    <label class="field-check">
+      <input type="checkbox" bind:checked={settings.overwrite_original} />
+      Overwrite the original file
+    </label>
+    <label class="field-check">
+      <input type="checkbox" bind:checked={settings.fulllog} />
+      Full request/response log (debug)
+    </label>
+    <label class="field-check">
+      <input type="checkbox" bind:checked={settings.show_kodi} />
+      Show Kodi integration
+    </label>
   </div>
 
-  {#if version}
-    <p class="version">Version {version}</p>
-  {/if}
+  <div class="section">
+    <div class="section-title">Updates</div>
+    <label class="field-check">
+      <input type="checkbox" bind:checked={settings.auto_check_updates} />
+      Automatically check for updates on startup
+    </label>
+    <div class="field-check">
+      <button onclick={() => onCheckUpdates?.()}>Check for updates now</button>
+      {#if updateStatus}<span class="update-status">{updateStatus}</span>{/if}
+    </div>
+    {#if version}
+      <div class="version">Version {version}</div>
+    {/if}
+  </div>
 </div>
 
 <style>
   .settings {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    max-width: 720px;
-  }
-  .row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .lbl {
-    width: 120px;
-    flex: 0 0 auto;
-  }
-  .row input,
-  .row select {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-  .check {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    gap: 15px;
+    width: 100%;
   }
   .col {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    margin-top: 8px;
+  }
+  .col > span {
+    color: var(--muted, #888);
   }
   textarea {
     width: 100%;
     font-family: monospace;
+    resize: vertical;
+  }
+  textarea::-webkit-resizer {
+    display: none;
   }
   .reset {
     align-self: flex-start;
-    margin-top: 6px;
-    font-size: 0.85em;
-  }
-  .actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-top: 8px;
-  }
-  .flash {
-    color: #27ae60;
-  }
-  .version {
-    margin-top: 4px;
-    color: var(--muted, #888);
-    font-size: 0.85em;
-  }
-  hr {
-    width: 100%;
-    border: none;
-    border-top: 1px solid rgba(128, 128, 128, 0.25);
-    margin: 6px 0;
   }
   .update-status {
     color: var(--muted, #888);
-    font-size: 0.9em;
+  }
+  .version {
+    text-align: left;
+    color: var(--muted, #888);
+    font-size: 0.95em;
   }
 </style>
