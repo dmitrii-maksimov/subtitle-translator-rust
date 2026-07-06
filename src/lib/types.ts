@@ -63,6 +63,24 @@ export interface TrackPref {
   delete: boolean;
 }
 
+export interface KodiInstance {
+  ip: string;
+  port: number;
+  name: string;
+  source: string;
+}
+
+export interface KodiEntry {
+  label: string;
+  file: string;
+  is_dir: boolean;
+}
+
+export interface KodiPing {
+  ok: boolean;
+  message: string;
+}
+
 // A non-null placeholder so the settings state variable is always AppSettings
 // (real values overwrite it right after loading from the backend).
 export function emptySettings(): AppSettings {

@@ -45,6 +45,10 @@ pub fn run() {
             commands::cancel_job,
             commands::translate_srt_file,
             commands::run_batch,
+            commands::kodi_ping,
+            commands::kodi_discover,
+            commands::kodi_browse,
+            commands::kodi_map_preview,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

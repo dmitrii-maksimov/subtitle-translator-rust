@@ -112,6 +112,10 @@
   <hr />
 
   <label class="check">
+    <input type="checkbox" bind:checked={settings.show_kodi} />
+    Show Kodi integration
+  </label>
+  <label class="check">
     <input type="checkbox" bind:checked={settings.auto_check_updates} />
     Automatically check for updates on startup
   </label>

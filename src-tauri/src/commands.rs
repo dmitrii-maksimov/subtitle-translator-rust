@@ -237,6 +237,111 @@ pub fn cancel_job(state: State<AppState>) {
     state.cancel.store(true, Ordering::SeqCst);
 }
 
+// ---- Kodi ----
+
+use crate::kodi_client::{self, KodiClient, KodiInstance};
+
+#[derive(Serialize)]
+pub struct KodiPing {
+    pub ok: bool,
+    pub message: String,
+}
+
+#[derive(Serialize)]
+pub struct KodiEntry {
+    pub label: String,
+    pub file: String,
+    pub is_dir: bool,
+}
+
+fn kodi_from(host: String, port: u32, user: String, password: String) -> KodiClient {
+    KodiClient::new(&host, port as u16, &user, &password, 5.0)
+}
+
+#[tauri::command]
+pub async fn kodi_ping(host: String, port: u32, user: String, password: String) -> KodiPing {
+    tauri::async_runtime::spawn_blocking(move || {
+        let c = kodi_from(host, port, user, password);
+        let (ok, reason) = c.ping_with_reason();
+        if ok {
+            let v = c.get_version();
+            let message = if v.is_empty() {
+                "Connected".to_string()
+            } else {
+                format!("Connected — Kodi {v}")
+            };
+            KodiPing { ok: true, message }
+        } else {
+            KodiPing { ok: false, message: reason }
+        }
+    })
+    .await
+    .unwrap_or(KodiPing { ok: false, message: "internal task error".to_string() })
+}
+
+#[tauri::command]
+pub async fn kodi_discover(port_hint: u32) -> Vec<KodiInstance> {
+    use std::time::Duration;
+    tauri::async_runtime::spawn_blocking(move || {
+        kodi_client::discover_kodi(
+            port_hint as u16,
+            Duration::from_secs_f64(2.5),
+            Duration::from_secs_f64(0.5),
+            true,
+        )
+    })
+    .await
+    .unwrap_or_default()
+}
+
+#[tauri::command]
+pub async fn kodi_browse(
+    host: String,
+    port: u32,
+    user: String,
+    password: String,
+    path: Option<String>,
+) -> Result<Vec<KodiEntry>, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let c = kodi_from(host, port, user, password);
+        let items = match &path {
+            Some(p) => c.get_directory(p, "video")?,
+            None => c.get_sources("video")?,
+        };
+        let entries = items
+            .iter()
+            .map(|it| {
+                let file = it.get("file").and_then(|f| f.as_str()).unwrap_or("").to_string();
+                let label = it
+                    .get("label")
+                    .and_then(|l| l.as_str())
+                    .or_else(|| it.get("title").and_then(|t| t.as_str()))
+                    .filter(|s| !s.is_empty())
+                    .unwrap_or(&file)
+                    .to_string();
+                let is_dir = path.is_none()
+                    || it.get("filetype").and_then(|t| t.as_str()) == Some("directory")
+                    || file.ends_with('/');
+                KodiEntry { label, file, is_dir }
+            })
+            .collect();
+        Ok(entries)
+    })
+    .await
+    .map_err(|e| format!("task join error: {e}"))?
+}
+
+/// Preview the local→Kodi mapping for a sample file under the local parent.
+#[tauri::command]
+pub fn kodi_map_preview(local_parent: String, kodi_parent: String) -> Result<String, String> {
+    if local_parent.is_empty() || kodi_parent.is_empty() {
+        return Err("Specify both folders".to_string());
+    }
+    let sample = format!("{}/Example.S01E01.mkv", local_parent.trim_end_matches('/'));
+    let mapped = kodi_client::map_local_to_kodi(&sample, &local_parent, &kodi_parent)?;
+    Ok(format!("{sample}\n→ {mapped}"))
+}
+
 // ---- jobs ----
 
 /// Build an emit closure that forwards `Progress` values to Tauri events.

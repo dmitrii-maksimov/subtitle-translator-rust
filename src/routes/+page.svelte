@@ -5,12 +5,13 @@
   import { fileProgress, batchProgress, batchLabel, appendLog } from "$lib/stores";
   import MainTab from "$lib/MainTab.svelte";
   import SettingsTab from "$lib/SettingsTab.svelte";
+  import KodiTab from "$lib/KodiTab.svelte";
   import { emptySettings } from "$lib/types";
   import { checkForUpdate, applyUpdate, type UpdateAvailable } from "$lib/updater";
 
   let version = $state("");
 
-  let tab = $state<"main" | "settings">("main");
+  let tab = $state<"main" | "settings" | "kodi">("main");
   let ffmpegOk = $state(true);
   let installingFfmpeg = $state(false);
   let ffmpegError = $state("");
@@ -111,6 +112,9 @@
   <header>
     <nav>
       <button class:active={tab === "main"} onclick={() => (tab = "main")}>Main</button>
+      {#if appSettings.show_kodi}
+        <button class:active={tab === "kodi"} onclick={() => (tab = "kodi")}>Kodi</button>
+      {/if}
       <button class:active={tab === "settings"} onclick={() => (tab = "settings")}>
         Settings
       </button>
@@ -142,6 +146,8 @@
     <main>
       {#if tab === "main"}
         <MainTab settings={appSettings} />
+      {:else if tab === "kodi"}
+        <KodiTab bind:settings={appSettings} />
       {:else}
         <SettingsTab
           bind:settings={appSettings}
