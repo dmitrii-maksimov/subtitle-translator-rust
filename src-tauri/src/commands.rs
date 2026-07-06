@@ -372,6 +372,33 @@ pub async fn kodi_browse(
     .map_err(|e| format!("task join error: {e}"))?
 }
 
+/// Start the Kodi-follow loop: keep the translated SRT ahead of Kodi playback
+/// and push it to Kodi. Streams progress; runs until cancelled.
+#[tauri::command]
+pub async fn start_kodi_follow(app: AppHandle, state: State<'_, AppState>) -> Result<(), String> {
+    let settings = state.settings.lock().unwrap().clone();
+    let cancel = state.cancel.clone();
+    cancel.store(false, Ordering::SeqCst);
+    let target_lang = if settings.target_language.is_empty() {
+        "ru".to_string()
+    } else {
+        settings.target_language.clone()
+    };
+    tauri::async_runtime::spawn_blocking(move || {
+        let emit = make_emitter(app);
+        let translator = TranslationService::new(settings.clone());
+        let kodi = kodi_from(
+            settings.kodi_host.clone(),
+            settings.kodi_port,
+            settings.kodi_user.clone(),
+            settings.kodi_password.clone(),
+        );
+        crate::follow::kodi_follow_translate(&settings, &translator, &kodi, &target_lang, &cancel, &emit)
+    })
+    .await
+    .map_err(|e| format!("task join error: {e}"))?
+}
+
 /// Preview the local→Kodi mapping for a sample file under the local parent.
 #[tauri::command]
 pub fn kodi_map_preview(local_parent: String, kodi_parent: String) -> Result<String, String> {

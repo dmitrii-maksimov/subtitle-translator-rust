@@ -43,6 +43,7 @@ export const api = {
   ) => invoke<KodiEntry[]>("kodi_browse", { host, port, user, password, path }),
   kodiMapPreview: (localParent: string, kodiParent: string) =>
     invoke<string>("kodi_map_preview", { localParent, kodiParent }),
+  startKodiFollow: () => invoke<void>("start_kodi_follow"),
   translateSrtFile: (path: string) => invoke<string>("translate_srt_file", { path }),
   runBatch: (decisions: FileDecision[]) => invoke<string>("run_batch", { decisions }),
 };

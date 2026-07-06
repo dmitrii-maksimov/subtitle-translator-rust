@@ -1,6 +1,7 @@
 <script lang="ts">
   import { open } from "@tauri-apps/plugin-dialog";
   import { api } from "./tauri";
+  import KodiFollow from "./KodiFollow.svelte";
   import type { AppSettings, KodiEntry, KodiInstance } from "./types";
 
   let { settings = $bindable() }: { settings: AppSettings } = $props();
@@ -14,6 +15,7 @@
 
   let preview = $state("");
   let savedFlash = $state(false);
+  let showFollow = $state(false);
 
   // Browse modal state.
   let browseOpen = $state(false);
@@ -186,9 +188,14 @@
 
   <div class="actions">
     <button class="primary" onclick={save}>Save Kodi settings</button>
+    <button onclick={() => (showFollow = true)}>Follow Kodi playback…</button>
     {#if savedFlash}<span class="flash">Saved ✓</span>{/if}
   </div>
 </div>
+
+{#if showFollow}
+  <KodiFollow onClose={() => (showFollow = false)} />
+{/if}
 
 {#if browseOpen}
   <div class="backdrop">

@@ -189,6 +189,50 @@ impl KodiClient {
         Ok(Some(data))
     }
 
+    /// Switch to an already-present subtitle whose language matches `target_lang`
+    /// (for embedded mkv tracks). Returns true if one was found and selected.
+    pub fn enable_subtitle_by_lang(&self, target_lang: &str, mut log: impl FnMut(String)) -> bool {
+        if target_lang.is_empty() {
+            return false;
+        }
+        let pid = match self.get_active_video_player_id() {
+            Some(p) => p,
+            None => return false,
+        };
+        let subs = match self.rpc("Player.GetProperties", Some(json!({"playerid": pid, "properties": ["subtitles"]}))) {
+            Ok(p) => p.get("subtitles").and_then(|s| s.as_array()).cloned().unwrap_or_default(),
+            Err(e) => {
+                log(format!("Kodi: GetProperties subtitles failed: {e}"));
+                return false;
+            }
+        };
+        let target_l = target_lang.to_lowercase();
+        let target_l = target_l.trim();
+        let mut chosen: Option<usize> = None;
+        for (i, s) in subs.iter().enumerate() {
+            let lang = s.get("language").and_then(|l| l.as_str()).unwrap_or("").to_lowercase();
+            let lang = lang.trim();
+            if !lang.is_empty() && (lang.starts_with(target_l) || target_l.starts_with(lang)) {
+                chosen = Some(i);
+                break;
+            }
+        }
+        let idx = match chosen {
+            Some(i) => i,
+            None => {
+                log(format!("Kodi: no existing subtitle matches target lang '{target_l}'"));
+                return false;
+            }
+        };
+        match self.rpc("Player.SetSubtitle", Some(json!({"playerid": pid, "subtitle": idx, "enable": true}))) {
+            Ok(_) => true,
+            Err(e) => {
+                log(format!("Kodi: index switch failed: {e}"));
+                false
+            }
+        }
+    }
+
     /// Attach an external SRT and switch to it (filename → language → last-added),
     /// then nudge a -0.5s seek to force overlay refresh only while paused.
     pub fn set_subtitle(

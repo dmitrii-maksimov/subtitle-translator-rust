@@ -7,6 +7,7 @@ pub mod ffmpeg;
 #[allow(dead_code)]
 mod kodi_client;
 mod live;
+mod follow;
 mod orchestrate;
 mod pricing;
 mod services;
@@ -52,6 +53,7 @@ pub fn run() {
             commands::kodi_map_preview,
             commands::probe_subs_partial,
             commands::start_live,
+            commands::start_kodi_follow,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
