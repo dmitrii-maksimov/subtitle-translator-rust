@@ -12,6 +12,7 @@ export const api = {
   installFfmpeg: () => invoke<string>("install_ffmpeg"),
   priceFor: (model: string) => invoke<string | null>("price_for", { model }),
   listModels: () => invoke<ModelInfo[]>("list_models"),
+  modelsInfo: (ids: string[]) => invoke<ModelInfo[]>("models_info", { ids }),
   probeSubs: (path: string) => invoke<Stream[]>("probe_subs", { path }),
   pickSourceStream: (streams: Stream[], targetLang: string) =>
     invoke<number | null>("pick_source_stream", { streams, targetLang }),

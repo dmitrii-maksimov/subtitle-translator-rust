@@ -35,6 +35,7 @@ pub fn run() {
             commands::install_ffmpeg,
             commands::price_for,
             commands::list_models,
+            commands::models_info,
             commands::probe_subs,
             commands::pick_source_stream,
             commands::cancel_job,

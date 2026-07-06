@@ -173,6 +173,20 @@ pub fn price_for(model: String) -> Option<String> {
     pricing::format_pricing(&model)
 }
 
+/// Map a list of model ids to their pricing/chat info from the static table.
+/// Used to restore prices for the cached model list on startup (prices come
+/// from the local table, not the API).
+#[tauri::command]
+pub fn models_info(ids: Vec<String>) -> Vec<ModelInfo> {
+    ids.into_iter()
+        .map(|id| ModelInfo {
+            price: pricing::format_pricing(&id),
+            is_chat: pricing::is_text_completion_model(&id),
+            id,
+        })
+        .collect()
+}
+
 #[tauri::command]
 pub fn list_models(state: State<AppState>) -> Result<Vec<ModelInfo>, String> {
     let settings = state.settings.lock().unwrap().clone();
