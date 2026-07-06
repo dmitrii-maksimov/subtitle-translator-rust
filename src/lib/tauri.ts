@@ -8,6 +8,8 @@ export const api = {
   loadSettings: () => invoke<AppSettings>("load_settings"),
   saveSettings: (settings: AppSettings) => invoke<void>("save_settings", { settings }),
   appVersion: () => invoke<string>("app_version"),
+  defaultPrompts: () =>
+    invoke<{ main_prompt_template: string; system_role: string }>("default_prompts"),
   checkFfmpeg: () => invoke<boolean>("check_ffmpeg"),
   installFfmpeg: () => invoke<string>("install_ffmpeg"),
   priceFor: (model: string) => invoke<string | null>("price_for", { model }),

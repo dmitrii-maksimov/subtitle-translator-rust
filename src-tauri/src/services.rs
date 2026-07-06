@@ -188,9 +188,9 @@ fn truncate(s: &str, n: usize) -> String {
     s.chars().take(n).collect()
 }
 
-const DEFAULT_SYSTEM_ROLE: &str = "You translate subtitles. Output must be ONLY the translated lines, one per input line, without indices, timestamps, or any additional labels.";
+pub const DEFAULT_SYSTEM_ROLE: &str = "You translate subtitles. Output must be ONLY the translated lines, one per input line, without indices, timestamps, or any additional labels.";
 
-const DEFAULT_TEMPLATE: &str = "{header}\n- Keep numbering (e.g., 12:, 43:, ...)\n- Do not change the number of lines or merge/split cues\n- Preserve line breaks within each numbered block exactly as in the input\n- Return ONLY the translated text blocks with the same numbering, no timestamps, no extra comments{extra}\n\n- New subtitles don't have to contain any characters in original language\nExample:\n1:\nHello!\n42:\nHow are you?\n\nText:\n{src_block}";
+pub const DEFAULT_TEMPLATE: &str = "{header}\n- Keep numbering (e.g., 12:, 43:, ...)\n- Do not change the number of lines or merge/split cues\n- Preserve line breaks within each numbered block exactly as in the input\n- Return ONLY the translated text blocks with the same numbering, no timestamps, no extra comments{extra}\n\n- New subtitles don't have to contain any characters in original language\nExample:\n1:\nHello!\n42:\nHow are you?\n\nText:\n{src_block}";
 
 #[cfg(test)]
 mod tests {

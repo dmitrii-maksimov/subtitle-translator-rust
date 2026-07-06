@@ -22,6 +22,13 @@
     savedFlash = true;
     setTimeout(() => (savedFlash = false), 1200);
   }
+
+  async function resetMainPrompt() {
+    settings.main_prompt_template = (await api.defaultPrompts()).main_prompt_template;
+  }
+  async function resetSystemRole() {
+    settings.system_role = (await api.defaultPrompts()).system_role;
+  }
 </script>
 
 <div class="settings">
@@ -85,13 +92,16 @@
   <details>
     <summary>Advanced prompt overrides</summary>
     <label class="col">
-      <span>System role</span>
-      <textarea rows="2" bind:value={settings.system_role}></textarea>
-    </label>
-    <label class="col">
       <span>Main prompt template (use {"{header}"}, {"{extra}"}, {"{src_block}"})</span>
       <textarea rows="6" bind:value={settings.main_prompt_template}></textarea>
     </label>
+    <button class="reset" onclick={resetMainPrompt}>Reset main prompt to default</button>
+
+    <label class="col">
+      <span>System role (chat system message)</span>
+      <textarea rows="2" bind:value={settings.system_role}></textarea>
+    </label>
+    <button class="reset" onclick={resetSystemRole}>Reset system role to default</button>
   </details>
 
   <div class="actions">
@@ -150,6 +160,11 @@
   textarea {
     width: 100%;
     font-family: monospace;
+  }
+  .reset {
+    align-self: flex-start;
+    margin-top: 6px;
+    font-size: 0.85em;
   }
   .actions {
     display: flex;

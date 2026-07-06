@@ -3,6 +3,9 @@
 mod commands;
 mod engine;
 pub mod ffmpeg;
+// Ported Kodi client; command/UI wiring lands in the next pass.
+#[allow(dead_code)]
+mod kodi_client;
 mod orchestrate;
 mod pricing;
 mod services;
@@ -31,6 +34,7 @@ pub fn run() {
             commands::load_settings,
             commands::save_settings,
             commands::app_version,
+            commands::default_prompts,
             commands::check_ffmpeg,
             commands::install_ffmpeg,
             commands::price_for,

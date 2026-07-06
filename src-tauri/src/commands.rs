@@ -71,6 +71,22 @@ pub fn app_version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
 }
 
+#[derive(Serialize)]
+pub struct DefaultPrompts {
+    pub main_prompt_template: String,
+    pub system_role: String,
+}
+
+/// The built-in default prompt template + system role, for the "reset to
+/// default" buttons in Settings (single source of truth in `services`).
+#[tauri::command]
+pub fn default_prompts() -> DefaultPrompts {
+    DefaultPrompts {
+        main_prompt_template: crate::services::DEFAULT_TEMPLATE.to_string(),
+        system_role: crate::services::DEFAULT_SYSTEM_ROLE.to_string(),
+    }
+}
+
 #[tauri::command]
 pub fn check_ffmpeg() -> bool {
     tools::check_ffmpeg_available()
