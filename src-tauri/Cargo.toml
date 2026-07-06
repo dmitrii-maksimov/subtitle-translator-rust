@@ -1,6 +1,6 @@
 [package]
 name = "subtitle-translator-rust"
-version = "2.0.0"
+version = "2.0.1"
 description = "Extract, translate and re-mux MKV subtitles via any OpenAI-compatible API"
 authors = ["Dmitrii Maksimov"]
 edition = "2021"

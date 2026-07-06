@@ -6,6 +6,24 @@ file by `scripts/extract_changelog.mjs`.
 
 Format: one `## <version>` header per release, newest first.
 
+## 2.0.1
+
+### Added
+- **Theme switcher** in Settings: System (follow OS) / Light / Dark, applied
+  instantly and persisted.
+- **Download ffmpeg** button in the "ffmpeg not found" banner — fetches
+  ffmpeg/ffprobe next to the app on Windows, with progress.
+- Built-in **auto-updater** wired into the UI: startup check (toggleable),
+  a "Check for updates now" button in Settings, and an "Install & Restart"
+  banner when a newer signed release is available.
+
+### Fixed
+- App version was duplicated in the window title and inside the window; it now
+  shows only on the Settings tab, and the OS title bar just reads
+  "Subtitle Translator".
+- Settings layout: dropdowns and text fields now share the same height, and
+  Workers / Window / Overlap are full-width rows again.
+
 ## 2.0.0
 
 Complete rewrite of Subtitle Translator on **Rust + Tauri** (the previous
