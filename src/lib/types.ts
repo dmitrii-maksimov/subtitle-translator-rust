@@ -7,6 +7,7 @@ export interface AppSettings {
   workers: number;
   window: number;
   overlap: number;
+  temperature: number;
   target_language: string;
   last_dir: string;
   fulllog: boolean;
@@ -14,11 +15,13 @@ export interface AppSettings {
   overwrite_original: boolean;
   main_prompt_template: string;
   system_role: string;
+  prompt_migration_declined: string;
   default_source_lang: string;
   default_source_title: string;
   cached_tag_lang: string;
   cached_iso3: string;
   cached_source_lang_input: string;
+  cached_lang_meta: string;
   cached_models: string[];
   use_custom_model: boolean;
   kodi_host: string;
@@ -91,6 +94,7 @@ export function emptySettings(): AppSettings {
     workers: 5,
     window: 25,
     overlap: 10,
+    temperature: 0.2,
     target_language: "ru",
     last_dir: "",
     fulllog: false,
@@ -98,11 +102,13 @@ export function emptySettings(): AppSettings {
     overwrite_original: true,
     main_prompt_template: "",
     system_role: "",
+    prompt_migration_declined: "",
     default_source_lang: "eng",
     default_source_title: "Full",
     cached_tag_lang: "",
     cached_iso3: "",
     cached_source_lang_input: "",
+    cached_lang_meta: "",
     cached_models: [],
     use_custom_model: false,
     kodi_host: "",

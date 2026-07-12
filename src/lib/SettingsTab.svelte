@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import ModelPicker from "./ModelPicker.svelte";
   import NumberField from "./NumberField.svelte";
   import type { AppSettings } from "./types";
@@ -21,6 +22,31 @@
   }
   async function resetSystemRole() {
     settings.system_role = (await api.defaultPrompts()).system_role;
+  }
+
+  // Offer to update a *custom* main prompt to the new default. Users who never
+  // customized it (empty override) already track the default silently, handled
+  // in the Rust settings loader. We only prompt when the stored override is a
+  // genuine custom prompt and hasn't been declined against this new default.
+  let defaultMainPrompt = $state("");
+  const promptUpdateAvailable = $derived(
+    defaultMainPrompt !== "" &&
+      settings.main_prompt_template.trim() !== "" &&
+      settings.main_prompt_template !== defaultMainPrompt &&
+      settings.prompt_migration_declined !== defaultMainPrompt,
+  );
+
+  onMount(async () => {
+    defaultMainPrompt = (await api.defaultPrompts()).main_prompt_template;
+  });
+
+  function useNewPrompt() {
+    // Empty override => always tracks the live default.
+    settings.main_prompt_template = "";
+    settings.prompt_migration_declined = "";
+  }
+  function keepMyPrompt() {
+    settings.prompt_migration_declined = defaultMainPrompt;
   }
 </script>
 
@@ -69,6 +95,17 @@
       <NumberField bind:value={settings.overlap} min={0} />
     </label>
     <label class="field-row">
+      <span class="field-label colon">Temperature</span>
+      <input
+        type="number"
+        min="0"
+        max="2"
+        step="0.1"
+        bind:value={settings.temperature}
+        title="Sampling temperature (0–2). Low values keep the model from drifting into the wrong language. Default 0.2."
+      />
+    </label>
+    <label class="field-row">
       <span class="field-label colon">Extra instruction</span>
       <input type="text" bind:value={settings.extra_prompt} placeholder="e.g. keep it formal" />
     </label>
@@ -76,6 +113,18 @@
 
   <div class="section">
     <div class="section-title">Prompt overrides</div>
+    {#if promptUpdateAvailable}
+      <div class="prompt-offer">
+        <span>
+          A new default translation prompt is available (better wrong-language
+          handling and proper-noun rules). You have a custom prompt.
+        </span>
+        <div class="offer-btns">
+          <button class="primary" onclick={useNewPrompt}>Use new default</button>
+          <button onclick={keepMyPrompt}>Keep mine</button>
+        </div>
+      </div>
+    {/if}
     <label class="col">
       <span>Main prompt template (use {"{header}"}, {"{extra}"}, {"{src_block}"})</span>
       <textarea rows="6" bind:value={settings.main_prompt_template}></textarea>
@@ -145,6 +194,20 @@
   }
   .reset {
     align-self: flex-start;
+  }
+  .prompt-offer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid rgba(128, 128, 128, 0.35);
+    border-radius: 8px;
+    background: rgba(128, 128, 128, 0.1);
+    font-size: 0.92em;
+  }
+  .offer-btns {
+    display: flex;
+    gap: 8px;
   }
   .update-status {
     color: var(--muted, #888);

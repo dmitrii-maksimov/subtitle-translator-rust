@@ -77,6 +77,7 @@ Settings live in `~/.subtitle_translator_settings.json` (shared format with the
 | Workers | Parallel translation threads (max 10) | `5` |
 | Window | Subtitles per translation chunk | `25` |
 | Overlap | Context overlap between chunks | `10` |
+| Temperature | Sampling temperature (0–2); low keeps output faithful and on-language | `0.2` |
 | Overwrite original | Replace the source MKV in place | on |
 
 ## How it works
@@ -86,7 +87,10 @@ Settings live in `~/.subtitle_translator_settings.json` (shared format with the
 2. **Extract** — ffmpeg pulls the chosen track to a temporary SRT.
 3. **Translate** — the SRT is split into overlapping windows translated in
    parallel via the Chat API; overlap keeps translations consistent across
-   chunk boundaries.
+   chunk boundaries. Each window is checked against the target language's
+   writing system; if it drifts into the wrong language it is re-run with rising
+   temperature (up to 3 attempts), and any window that still looks wrong is kept
+   as the best attempt with a `[Warning]` in the log.
 4. **Re-mux** — the translated SRT is muxed back as a new track (deleted tracks
    excluded via explicit `-map` whitelisting). By default the original is
    replaced; otherwise a new `.translated.mkv` is created.

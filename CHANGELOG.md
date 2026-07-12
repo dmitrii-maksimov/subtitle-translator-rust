@@ -6,6 +6,45 @@ file by `scripts/extract_changelog.mjs`.
 
 Format: one `## <version>` header per release, newest first.
 
+## 2.2.0
+
+### Changed
+- Translation windows are now handed to the worker pool strictly in order
+  (workers pick up windows 1,2,3,… and grab the next as they free up) instead
+  of being split into per-thread chunks, so progress reads roughly front-to-back.
+  The final subtitles are still reassembled by index, so output order is
+  unchanged.
+
+### Added
+- **Temperature** setting (Settings → Translation). Controls how creative the
+  model is when translating; defaults to a low `0.2` for more faithful,
+  consistent output.
+- The main-window log now auto-scrolls to follow new lines, and stops following
+  as soon as you scroll up to read history (resumes when you scroll back down).
+- Every retry, wrong-language detection, and per-line fix is now reported in the
+  log as it happens, so you can see exactly what the app is doing.
+- The default translation prompt now updates itself: if you never customized it,
+  you silently get the new one; if you did customize it, the app offers to switch
+  to the new default (Settings → Prompt overrides) and remembers if you decline.
+
+### Fixed
+- Subtitles no longer drift into the wrong language. Previously whole batches
+  could come back in English (or with stray Chinese characters) when translating
+  to another language, and were saved silently. Each translated window is now
+  checked against the target language's script and, if it looks wrong, re-run
+  with rising temperature (up to 3 attempts) so a stuck line can escape the
+  wrong language instead of deterministically repeating it.
+- A second cleanup pass then re-translates any individual line that is still in
+  the wrong language on its own (short lines sometimes drift only because of the
+  surrounding window context). Anything that still can't be produced in the
+  target language is kept as the best attempt and flagged with a `[Warning]`.
+- Product, model and code names / alphanumeric identifiers (e.g. `Krieger-45`)
+  are now kept in Latin letters instead of being translated or transliterated;
+  ordinary personal names are still rendered naturally in the target language.
+- The target language is now resolved to its proper name and writing system
+  (looked up once and cached), so the translation prompt names the language
+  explicitly instead of passing a raw code like `th`.
+
 ## 2.1.1
 
 ### Fixed

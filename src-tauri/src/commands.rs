@@ -567,6 +567,7 @@ pub async fn run_batch(
             settings.cached_source_lang_input = outcome.cached_source_lang_input;
             settings.cached_tag_lang = outcome.cached_tag_lang;
             settings.cached_iso3 = outcome.cached_iso3;
+            settings.cached_lang_meta = outcome.cached_lang_meta;
             last_output = outcome.output_path;
         }
 

@@ -78,6 +78,9 @@ pub fn kodi_follow_translate(
 
     emit(Progress::Status("Following Kodi: started.".to_string()));
 
+    // Resolve target-language metadata once (prompt name + script ranges).
+    let lang_meta = crate::orchestrate::resolve_lang_meta(translator, settings, target_lang).0;
+
     while !cancel.load(Ordering::SeqCst) {
         let progress = match kodi.get_player_progress() {
             Err(e) => {
@@ -242,7 +245,15 @@ pub fn kodi_follow_translate(
         )));
 
         let translated_chunk = match engine::translate_subs(
-            &batch, translator, settings, target_lang, cancel, settings.fulllog, emit,
+            &batch,
+            translator,
+            settings,
+            target_lang,
+            &lang_meta.name,
+            &lang_meta.ranges,
+            cancel,
+            settings.fulllog,
+            emit,
         ) {
             Ok(v) => v,
             Err(e) => {

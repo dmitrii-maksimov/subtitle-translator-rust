@@ -20,6 +20,8 @@ pub struct FileOutcome {
     pub cached_source_lang_input: String,
     pub cached_tag_lang: String,
     pub cached_iso3: String,
+    /// Updated target-language metadata cache (see `AppSettings::cached_lang_meta`).
+    pub cached_lang_meta: String,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -47,11 +49,24 @@ pub fn translate_and_remux(
         return Err("No subtitles parsed from SRT".to_string());
     }
 
+    // Resolve the target language (human name for the prompt + Unicode script
+    // ranges for per-window validation) before translating.
+    let (lang_meta, lang_meta_cache) = resolve_lang_meta(translator, settings, target_lang);
+    if !lang_meta.name.is_empty() {
+        emit(Progress::Status(format!(
+            "Target language: {} ({} script range(s) for validation).",
+            lang_meta.name,
+            lang_meta.ranges.len()
+        )));
+    }
+
     let ordered = engine::translate_subs(
         &entries,
         translator,
         settings,
         target_lang,
+        &lang_meta.name,
+        &lang_meta.ranges,
         cancel,
         settings.fulllog,
         emit,
@@ -102,6 +117,7 @@ pub fn translate_and_remux(
             cached_source_lang_input: settings.cached_source_lang_input.clone(),
             cached_tag_lang: settings.cached_tag_lang.clone(),
             cached_iso3: settings.cached_iso3.clone(),
+            cached_lang_meta: lang_meta_cache.clone(),
         });
     }
 
@@ -243,7 +259,34 @@ pub fn translate_and_remux(
         cached_source_lang_input: csli,
         cached_tag_lang: ctl,
         cached_iso3: ci,
+        cached_lang_meta: lang_meta_cache,
     })
+}
+
+/// Resolve target-language metadata (English name + Unicode script ranges) for
+/// the prompt header and per-window script validation. Reuses
+/// `settings.cached_lang_meta` when it was produced for the same `target_lang`;
+/// otherwise asks the model. Returns the metadata plus the JSON cache blob to
+/// persist (the previous blob is preserved on a cache hit or inference failure).
+pub fn resolve_lang_meta(
+    translator: &TranslationService,
+    settings: &AppSettings,
+    target_lang: &str,
+) -> (crate::services::LangMeta, String) {
+    if let Some(meta) = crate::services::lang_meta_from_cache(&settings.cached_lang_meta, target_lang) {
+        return (meta, settings.cached_lang_meta.clone());
+    }
+    match translator.chat_infer_lang_meta(target_lang) {
+        Ok(meta) => {
+            let blob = crate::services::lang_meta_to_cache(target_lang, &meta);
+            (meta, blob)
+        }
+        // Inference failed: skip validation (empty meta) and keep any old cache.
+        Err(_) => (
+            crate::services::LangMeta::default(),
+            settings.cached_lang_meta.clone(),
+        ),
+    }
 }
 
 /// Re-probe an MKV's subtitle streams (used by the batch loop before remux).

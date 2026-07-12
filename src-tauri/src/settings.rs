@@ -21,6 +21,9 @@ fn default_window() -> u32 {
 fn default_overlap() -> u32 {
     10
 }
+fn default_temperature() -> f32 {
+    0.2
+}
 fn default_target_language() -> String {
     "ru".to_string()
 }
@@ -70,6 +73,10 @@ pub struct AppSettings {
     pub window: u32,
     #[serde(default = "default_overlap")]
     pub overlap: u32,
+    /// Sampling temperature for translation requests. Low by default (0.2) to
+    /// keep the model from drifting into the wrong language; retries force 0.0.
+    #[serde(default = "default_temperature")]
+    pub temperature: f32,
 
     #[serde(default = "default_target_language")]
     pub target_language: String,
@@ -80,6 +87,10 @@ pub struct AppSettings {
     pub overwrite_original: bool,
     pub main_prompt_template: String,
     pub system_role: String,
+    /// The default template a user with a *custom* prompt has chosen to keep
+    /// their own against, so we stop offering that particular new default.
+    /// Empty = never declined.
+    pub prompt_migration_declined: String,
 
     #[serde(default = "default_source_lang")]
     pub default_source_lang: String,
@@ -89,6 +100,10 @@ pub struct AppSettings {
     pub cached_tag_lang: String,
     pub cached_iso3: String,
     pub cached_source_lang_input: String,
+    /// Cached target-language metadata for script validation, as JSON
+    /// `{"input":<target_lang>,"name":<English name>,"ranges":[[lo,hi],...]}`.
+    /// Reused while `input` matches the current target language.
+    pub cached_lang_meta: String,
 
     pub cached_models: Vec<String>,
     pub use_custom_model: bool,
@@ -131,6 +146,7 @@ impl Default for AppSettings {
             workers: default_workers(),
             window: default_window(),
             overlap: default_overlap(),
+            temperature: default_temperature(),
             target_language: default_target_language(),
             last_dir: String::new(),
             fulllog: false,
@@ -138,11 +154,13 @@ impl Default for AppSettings {
             overwrite_original: default_overwrite_original(),
             main_prompt_template: String::new(),
             system_role: String::new(),
+            prompt_migration_declined: String::new(),
             default_source_lang: default_source_lang(),
             default_source_title: default_source_title(),
             cached_tag_lang: String::new(),
             cached_iso3: String::new(),
             cached_source_lang_input: String::new(),
+            cached_lang_meta: String::new(),
             cached_models: Vec::new(),
             use_custom_model: false,
             kodi_host: String::new(),
@@ -195,6 +213,16 @@ impl AppSettings {
         if !had_show_kodi {
             settings.show_kodi = true;
         }
+        // Silently move users who never really customized the prompt (empty, or
+        // an override equal to some past/current default) onto the live default
+        // by clearing the override. Genuinely custom prompts are left for the UI
+        // to offer a migration.
+        if crate::services::is_known_default_template(&settings.main_prompt_template) {
+            settings.main_prompt_template.clear();
+        }
+        if crate::services::is_known_default_system_role(&settings.system_role) {
+            settings.system_role.clear();
+        }
         settings
     }
 
@@ -219,6 +247,7 @@ mod tests {
         assert_eq!(s.workers, 5);
         assert_eq!(s.window, 25);
         assert_eq!(s.overlap, 10);
+        assert_eq!(s.temperature, 0.2);
         assert_eq!(s.target_language, "ru");
         assert!(s.overwrite_original);
         assert!(!s.show_kodi);
@@ -234,6 +263,26 @@ mod tests {
         assert!(!s.show_kodi);
         // Missing keys fall back to defaults.
         assert_eq!(s.workers, 5);
+    }
+
+    #[test]
+    fn known_default_prompt_is_cleared_but_custom_kept() {
+        // A stored override equal to a past default → cleared (tracks live default).
+        let legacy = crate::services::LEGACY_DEFAULT_TEMPLATES[0];
+        let mut s = AppSettings::default();
+        s.main_prompt_template = legacy.to_string();
+        if crate::services::is_known_default_template(&s.main_prompt_template) {
+            s.main_prompt_template.clear();
+        }
+        assert!(s.main_prompt_template.is_empty(), "legacy default should be cleared");
+
+        // A genuinely custom prompt is preserved.
+        let mut c = AppSettings::default();
+        c.main_prompt_template = "MY CUSTOM {src_block}".into();
+        if crate::services::is_known_default_template(&c.main_prompt_template) {
+            c.main_prompt_template.clear();
+        }
+        assert_eq!(c.main_prompt_template, "MY CUSTOM {src_block}");
     }
 
     #[test]

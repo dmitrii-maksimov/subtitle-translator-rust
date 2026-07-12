@@ -78,6 +78,10 @@ pub fn live_translate_mkv(
         emit(Progress::Status("Live mode: started.".to_string()));
     }
 
+    // Resolve target-language metadata once for the whole session (prompt name
+    // + script ranges for per-window validation).
+    let lang_meta = crate::orchestrate::resolve_lang_meta(translator, settings, target_lang).0;
+
     let mut last_mtime: Option<SystemTime> = None;
     let mut mtime_stable_for: u64 = 0;
     let mut last_stable_announced = false;
@@ -175,6 +179,8 @@ pub fn live_translate_mkv(
             translator,
             settings,
             target_lang,
+            &lang_meta.name,
+            &lang_meta.ranges,
             cancel,
             settings.fulllog,
             emit,
